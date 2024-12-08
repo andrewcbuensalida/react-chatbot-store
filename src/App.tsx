@@ -23,7 +23,9 @@ const fetchOptions = {
 function App() {
   const [text, setText] = useState<any>('')
   const [allMessages, setAllMessages] = useState<any>([])
-  const [currentConversationId, setCurrentConversationId] = useState<any>(null)
+  const [currentConversationId, setCurrentConversationId] = useState<any>(
+    Math.random().toString(36).substr(2, 9)
+  )
   const [isResponseLoading, setIsResponseLoading] = useState<any>(false)
   const [errorText, setErrorText] = useState<any>('')
   const [isShowSidebar, setIsShowSidebar] = useState<any>(false)
@@ -31,7 +33,7 @@ function App() {
   const inputRef = useRef<any>(null)
 
   const currentMessages = allMessages.filter(
-    (msg: any) => msg.conversation_id === currentConversationId
+    (msg: any) => msg.conversationId === currentConversationId
   )
   const messagesToday = allMessages.filter(
     (msg: any) =>
@@ -42,19 +44,19 @@ function App() {
       new Date(msg.created_at).toDateString() !== new Date().toDateString()
   )
   const conversationsToday = messagesToday.reduce((acc: any, msg: any) => {
-    if (!acc[msg.conversation_id]) {
-      acc[msg.conversation_id] = [msg]
+    if (!acc[msg.conversationId]) {
+      acc[msg.conversationId] = [msg]
     } else {
-      acc[msg.conversation_id].push(msg)
+      acc[msg.conversationId].push(msg)
     }
     return acc
   }, {})
   const conversationsNotToday = messagesNotToday.reduce(
     (acc: any, msg: any) => {
-      if (!acc[msg.conversation_id]) {
-        acc[msg.conversation_id] = [msg]
+      if (!acc[msg.conversationId]) {
+        acc[msg.conversationId] = [msg]
       } else {
-        acc[msg.conversation_id].push(msg)
+        acc[msg.conversationId].push(msg)
       }
       return acc
     },
@@ -79,22 +81,27 @@ function App() {
   }, [])
 
   const submitHandler = async (e: any) => {
+    console.log(`*Submitting message...`, currentConversationId)
     e.preventDefault()
 
     if (!text) return
 
+    const messageId = Math.random().toString(36).substr(2, 9)
+    const newUserMessage = {
+      messageId,
+      conversationId: currentConversationId,
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      userId: '1',
+    }
     // temporarily add the message to the list. This will be replaced by the actual response since setAllMessages below uses an outdated allMessages state.
-    setAllMessages([
-      ...allMessages,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        conversationId: currentConversationId,
-        role: 'user',
-        content: text,
-        createdAt: new Date().toISOString(),
-        userId: '1',
-      },
-    ])
+    setAllMessages([...allMessages, newUserMessage])
 
     setTimeout(() => {
       scrollToLastItem.current?.lastElementChild?.scrollIntoView({
@@ -109,15 +116,7 @@ function App() {
         ...fetchOptions,
         method: 'POST',
         body: JSON.stringify({
-          message: {
-            content: [
-              {
-                type: 'text',
-                text,
-              },
-            ],
-            conversationId: currentConversationId,
-          },
+          message: newUserMessage,
         }),
       })
 
@@ -144,7 +143,16 @@ function App() {
         setTimeout(() => {
           setText('')
         }, 2)
-        setAllMessages([...allMessages, ...data.message])
+
+        const formattedMessage = {
+          messageId: data.message.message_id,
+          conversationId: data.message.conversation_id,
+          role: 'assistant',
+          content: data.message.content,
+          userId: '1',
+        }
+
+        setAllMessages([...allMessages, newUserMessage,formattedMessage])
       }
     } catch (e: any) {
       setErrorText('Error sending message. Please try again later.')
@@ -180,7 +188,9 @@ function App() {
         const formattedMessages = data.messages.map((msg: any) => {
           return {
             ...msg,
-            content: JSON.parse(msg.content.replace(/'/g, '"')), // for some reason, backend saves it to single quotes. Have to turn it into double quotes to parse.
+            conversationId: msg.conversation_id,
+            messageId: msg.message_id,
+            content: JSON.parse(msg.content), // for some reason, backend saves it to single quotes. Have to turn it into double quotes to parse.
             // createdAt: new Date(msg.created_at).toISOString(),
           }
         })
@@ -302,7 +312,7 @@ function App() {
               {currentMessages?.map((chatMsg: any) => {
                 const isUser = chatMsg.role === 'user'
                 return (
-                  <li key={chatMsg.message_id} ref={scrollToLastItem}>
+                  <li key={chatMsg.messageId} ref={scrollToLastItem}>
                     {isUser ? (
                       <div>
                         <BiSolidUserCircle size={28.8} />
