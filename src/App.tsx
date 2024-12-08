@@ -10,7 +10,7 @@ import { MdOutlineArrowLeft, MdOutlineArrowRight } from 'react-icons/md'
 
 const serverUrl =
   process.env.NODE_ENV === 'development'
-    ? 'http://localhost:8080'
+    ? 'http://localhost:8000'
     : 'https://pokemon4-0770c86f5a12.herokuapp.com' // TODO
 
 const fetchOptions = {
@@ -23,7 +23,7 @@ const fetchOptions = {
 function App() {
   const [text, setText] = useState<any>('')
   const [allMessages, setAllMessages] = useState<any>([])
-  const [currentTitle, setCurrentTitle] = useState<any>(null)
+  const [currentConversationId, setCurrentConversationId] = useState<any>(null)
   const [isResponseLoading, setIsResponseLoading] = useState<any>(false)
   const [errorText, setErrorText] = useState<any>('')
   const [isShowSidebar, setIsShowSidebar] = useState<any>(false)
@@ -31,32 +31,45 @@ function App() {
   const inputRef = useRef<any>(null)
 
   const currentMessages = allMessages.filter(
-    (msg: any) => msg.title === currentTitle
+    (msg: any) => msg.conversation_id === currentConversationId
   )
   const messagesToday = allMessages.filter(
     (msg: any) =>
-      new Date(msg.createdAt).toDateString() === new Date().toDateString()
+      new Date(msg.created_at).toDateString() === new Date().toDateString()
   )
-  const messagesTodayUniqueTitles = Array.from(
-    new Set(messagesToday.map((msg: any) => msg.title))
-  ).reverse()
-
-  const messagesNotTodayUniqueTitles = Array.from(
-    new Set(
-      allMessages
-        .map((msg: any) => msg.title)
-        .filter((title: any) => !messagesTodayUniqueTitles.includes(title))
-    )
-  ).reverse()
+  const messagesNotToday = allMessages.filter(
+    (msg: any) =>
+      new Date(msg.created_at).toDateString() !== new Date().toDateString()
+  )
+  const conversationsToday = messagesToday.reduce((acc: any, msg: any) => {
+    if (!acc[msg.conversation_id]) {
+      acc[msg.conversation_id] = [msg]
+    } else {
+      acc[msg.conversation_id].push(msg)
+    }
+    return acc
+  }, {})
+  const conversationsNotToday = messagesNotToday.reduce(
+    (acc: any, msg: any) => {
+      if (!acc[msg.conversation_id]) {
+        acc[msg.conversation_id] = [msg]
+      } else {
+        acc[msg.conversation_id].push(msg)
+      }
+      return acc
+    },
+    {}
+  )
+  console.log(`*Example conversationsNotToday: `, conversationsNotToday)
 
   const createNewChat = () => {
     setText('')
-    setCurrentTitle(null)
+    setCurrentConversationId(Math.random().toString(36).substr(2, 9))
     inputRef.current?.focus()
   }
 
-  const handleTitleClick = (uniqueTitle: any) => {
-    setCurrentTitle(uniqueTitle)
+  const handleConversationClick = (conversationId: any) => {
+    setCurrentConversationId(conversationId)
     setText('')
     inputRef.current?.focus()
   }
@@ -75,15 +88,13 @@ function App() {
       ...allMessages,
       {
         id: Math.random().toString(36).substr(2, 9),
-        title: currentTitle || text,
+        conversationId: currentConversationId,
         role: 'user',
         content: text,
         createdAt: new Date().toISOString(),
         userId: '1',
       },
     ])
-
-    setCurrentTitle(currentTitle || text)
 
     setTimeout(() => {
       scrollToLastItem.current?.lastElementChild?.scrollIntoView({
@@ -94,12 +105,19 @@ function App() {
     setErrorText('')
 
     try {
-      const response = await fetch(`${serverUrl}/api/completions`, {
+      const response = await fetch(`${serverUrl}/`, {
         ...fetchOptions,
         method: 'POST',
         body: JSON.stringify({
-          message: text,
-          title: currentTitle,
+          message: {
+            content: [
+              {
+                type: 'text',
+                text,
+              },
+            ],
+            conversationId: currentConversationId,
+          },
         }),
       })
 
@@ -126,8 +144,7 @@ function App() {
         setTimeout(() => {
           setText('')
         }, 2)
-        setAllMessages([...allMessages, ...data.newMessages])
-        setCurrentTitle(data.newMessages[0].title)
+        setAllMessages([...allMessages, ...data.message])
       }
     } catch (e: any) {
       setErrorText('Error sending message. Please try again later.')
@@ -154,9 +171,20 @@ function App() {
     async function getAllMessages() {
       try {
         console.log(`*Fetching previous messages...`)
-        const response = await fetch(`${serverUrl}/api/messages`, fetchOptions)
+        const response = await fetch(`${serverUrl}/api/messages/`, {
+          // ...fetchOptions,
+          method: 'GET',
+        })
         const data = await response.json()
-        setAllMessages(data)
+        console.log(`*Example data: `, data)
+        const formattedMessages = data.messages.map((msg: any) => {
+          return {
+            ...msg,
+            content: JSON.parse(msg.content.replace(/'/g, '"')), // for some reason, backend saves it to single quotes. Have to turn it into double quotes to parse.
+            // createdAt: new Date(msg.created_at).toISOString(),
+          }
+        })
+        setAllMessages(formattedMessages)
       } catch (error) {
         console.error('Error fetching previous messages:', error)
       }
@@ -174,41 +202,51 @@ function App() {
             <button>New Chat</button>
           </div>
           <div className="sidebar-history">
-            {messagesTodayUniqueTitles.length > 0 && (
+            {Object.keys(conversationsToday).length > 0 && (
               <>
                 <p>Today</p>
                 <ul>
-                  {messagesTodayUniqueTitles?.map((uniqueTitle: any) => {
-                    return (
-                      <li
-                        key={uniqueTitle}
-                        onClick={() => handleTitleClick(uniqueTitle)}
-                        className={`App_Unique_Title ${
-                          uniqueTitle === currentTitle ? 'active' : ''
-                        }`}
-                      >
-                        {uniqueTitle}
-                      </li>
-                    )
-                  })}
+                  {Object.entries(conversationsToday)?.map(
+                    ([conversationId, messages]: any) => {
+                      return (
+                        <li
+                          key={conversationId}
+                          onClick={() =>
+                            handleConversationClick(conversationId)
+                          }
+                          className={`App_Unique_Title ${
+                            conversationId === currentConversationId
+                              ? 'active'
+                              : ''
+                          }`}
+                        >
+                          {messages[0].content[0].text}
+                        </li>
+                      )
+                    }
+                  )}
                 </ul>
               </>
             )}
-            {messagesNotTodayUniqueTitles.length > 0 && (
+            {Object.keys(conversationsNotToday).length > 0 && (
               <>
                 <p>Previous</p>
                 <ul>
-                  {messagesNotTodayUniqueTitles?.map(
-                    (uniqueTitle: any, idx) => {
+                  {Object.entries(conversationsNotToday)?.map(
+                    ([conversationId, messages]: any) => {
                       return (
                         <li
-                          key={idx}
-                          onClick={() => handleTitleClick(uniqueTitle)}
+                          key={conversationId}
+                          onClick={() =>
+                            handleConversationClick(conversationId)
+                          }
                           className={`App_Unique_Title ${
-                            uniqueTitle === currentTitle ? 'active' : ''
+                            conversationId === currentConversationId
+                              ? 'active'
+                              : ''
                           }`}
                         >
-                          {uniqueTitle}
+                          {messages[0].content[0].text}
                         </li>
                       )
                     }
@@ -230,20 +268,18 @@ function App() {
         </section>
 
         <section className="main">
-          {!currentTitle && (
+          {!currentConversationId && (
             <div className="empty-chat-container">
-              <img src="pokeball.png" width={45} height={45} alt="ChatGPT" />
-              <h1>Pokemon Assistant</h1>
+              <img
+                src="robot-assistant.png"
+                width={45}
+                height={45}
+                alt="ChatGPT"
+              />
+              <h1>Store Assistant</h1>
               <h3>
-                Say 'show me Pikachu'
+                Say 'Get my orders'
                 <br />
-                Say 'picture of 151st pokemon'
-                <br />
-                Say 'Pokemon events in San Diego'
-                <br />
-                Say 'What are Charizards attacks?'
-                <br />
-                or ask me anything about Pokemon
               </h3>
             </div>
           )}
@@ -266,7 +302,7 @@ function App() {
               {currentMessages?.map((chatMsg: any) => {
                 const isUser = chatMsg.role === 'user'
                 return (
-                  <li key={chatMsg.id} ref={scrollToLastItem}>
+                  <li key={chatMsg.message_id} ref={scrollToLastItem}>
                     {isUser ? (
                       <div>
                         <BiSolidUserCircle size={28.8} />
@@ -274,37 +310,27 @@ function App() {
                     ) : (
                       <img
                         className="avatar"
-                        src="pokeball.png"
+                        src="robot-assistant.png"
                         alt="ChatGPT"
                       />
                     )}
                     {isUser ? (
                       <div>
                         <p className="role-title">You</p>
-                        <p>{chatMsg.content}</p>
+                        <p>{chatMsg.content[0].text}</p>
                       </div>
                     ) : (
                       <div>
                         <p className="role-title">Pokemon Assistant</p>
                         <p>
-                          {chatMsg.toolName === 'getPokemonImageByName' &&
-                          !chatMsg.errorMessage ? (
-                            <img
-                              src={JSON.parse(chatMsg.content).pokemonImage}
-                              alt="Pokemon"
-                              width={300}
-                              height={300}
-                            />
-                          ) : (
-                            chatMsg.content
-                              ?.split('\n')
-                              .map((line: any, index: any) => (
-                                <>
-                                  {line}
-                                  <br />
-                                </>
-                              ))
-                          )}
+                          {chatMsg.content[0].text
+                            ?.split('\n')
+                            .map((line: any, index: any) => (
+                              <p>
+                                {line}
+                                <br />
+                              </p>
+                            ))}
                         </p>
                       </div>
                     )}
