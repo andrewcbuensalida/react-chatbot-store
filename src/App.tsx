@@ -331,7 +331,7 @@ function App() {
                       </div>
                     ) : (
                       <div>
-                        <p className="role-title">Pokemon Assistant</p>
+                        <p className="role-title">Store Assistant</p>
                         <p>
                           {chatMsg.content[0].text
                             ?.split('\n')
