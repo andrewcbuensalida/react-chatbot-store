@@ -4,6 +4,12 @@
 
 ## The live site is at https://main.dy2wjrq0yceeb.amplifyapp.com/
 
+
+## Paired repos
+https://github.com/andrewcbuensalida/chatbot-store-openai-pandas.git
+https://github.com/andrewcbuensalida/chatbot-store-orders-products-python-pandas-fastapi.git
+https://github.com/andrewcbuensalida/react-chatbot-store.git
+
 ## Instructions to run app locally
 
 - Have git installed. https://gitforwindows.org/
