@@ -278,7 +278,7 @@ function App() {
         </section>
 
         <section className="main">
-          {!currentConversationId && (
+          {currentMessages.length === 0 && (
             <div className="empty-chat-container">
               <img
                 src="robot-assistant.png"
@@ -289,6 +289,8 @@ function App() {
               <h1>Store Assistant</h1>
               <h3>
                 Say 'Get my orders'
+                <br />
+                Say 'Get all orders'
                 <br />
               </h3>
             </div>
