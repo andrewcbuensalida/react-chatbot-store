@@ -288,7 +288,7 @@ function App() {
               />
               <h1>Store Assistant</h1>
               <h3>
-                Say 'Get my orders'
+                Say 'Get my orders' (Hint: Use customer ID 37077)
                 <br />
                 Say 'Get all orders'
                 <br />
