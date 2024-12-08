@@ -2,7 +2,7 @@
 
 ## Architecture
 
-## The live site is at https://master.d25jr6vo3627gh.amplifyapp.com/
+## The live site is at https://main.dy2wjrq0yceeb.amplifyapp.com/
 
 ## Instructions to run app locally
 
@@ -10,49 +10,11 @@
 - Have NodeJs installed. https://nodejs.org/
 - For backend:
 
-  - In a command prompt, run
-    - `git clone https://github.com/andrewcbuensalida/typescript-node-project.git`
-  - `cd typescript-node-project`
-  - Install node_modules
-    - `npm ci`
-  - Get an OPENAI api key, Tavily API key, then fill in .env file with it
-  - `npm run local`
-
-- For the database,
-
-  - Install Docker desktop. https://www.docker.com/products/docker-desktop and make sure it's running
-  - to use my Postgres container that has empty tables initialized:
-    - Pull then run in one step with
-      - `docker run -d --name pokemon-postgres-container -e POSTGRES_USER=yourusername -e POSTGRES_PASSWORD=yourpassword -p 5433:5432 andrewcbuensalida/pokemon-postgres-image:latest`
-  - Alternatively, to use a Postgres container that you have to manually initialize the tables
-
-    - Have a generic PostreSQL container running:
-      - `docker run --name pokemon-postgres-container -e POSTGRES_PASSWORD=yourpassword -e POSTGRES_USER=yourusername -p 5433:5432 -d postgres`
-      - --name is container name. -p is port mapping. --rm will delete container when done.
-    - Install ts-node
-      - `npm i ts-node --global`
-    - Create tables in the postgres container. cd to init-db.ts. Make sure CREATE DATABASE is commented out, then run
-      - `ts-node init-db.ts`
-      - You can do this too if you want to quickly reset the database
-
-  - To check if tables are successfully created
-    - In postgres container, connect to database with
-      - `psql -U yourusername -d pokemon_chatbot_db -p 5432`
-    - List databases
-      - `\l`
-    - to list tables
-      - `\dt`
-    - If you weren't connected to a database
-      - `\c <databaseName>`
-    - Check inside the table
-      - `SELECT * FROM messages;`
-    - disconnect from psql
-      - `\q`
 
 - For the front-end:
   - In command prompt
-    - `git clone https://github.com/andrewcbuensalida/react-chatgpt-clone-meta`
-    - `cd react-chatgpt-clone-meta`
+    - `git clone https://github.com/andrewcbuensalida/react-chatbot-store.git`
+    - `cd react-chatbot-store`
     - `npm ci`
     - `npm run start`
     - Go to http://localhost:3000/

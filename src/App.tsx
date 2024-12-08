@@ -11,7 +11,7 @@ import { MdOutlineArrowLeft, MdOutlineArrowRight } from 'react-icons/md'
 const serverUrl =
   process.env.NODE_ENV === 'development'
     ? 'http://localhost:8000'
-    : 'https://pokemon4-0770c86f5a12.herokuapp.com' // TODO
+    : 'https://chatbot-store-c419ab4c3ae7.herokuapp.com/' // TODO
 
 const fetchOptions = {
   headers: {
