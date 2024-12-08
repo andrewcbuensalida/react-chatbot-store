@@ -1,23 +1,6 @@
 ## About
 
-This ChatGPT clone allows you to ask a chatbot anything about Pokemon, from current Pokemon events, to abilities. You can even ask it to show you images of the Pokemon.
-
 ## Architecture
-
-### Conversation workflow
-
-- User goes to React website that's hosted on AWS Amplify. Asks a question about Pokemon.
-- Question goes to NodeJs server that's hosted in AWS Elastic Beanstalk.
-- NodeJs saves messages to a Postgres AWS RDS database.
-- NodeJs also sends question to OpenAI API.
-- OpenAI API does inference and either sends back the answer, or suggests what tools and arguments to use to NodeJs,
-- NodeJs always saves the messages to Postgres.
-- If OpenAI answered directly (finish_reason:stop), it is sent to React.
-- If it's a tool suggestion, NodeJs calls the tool with the given arguments, either the Tavily web search tool, or the PokeAPI tool,
-- Again NodeJs saves to Postgres the results of the tool call,
-- NodeJs either sends the tool call result to OpenAI to get a response to the search results for Tavily, OR a placeholder response is created for PokeAPI,
-- NodeJs again saves the response to Postgres,
-- Response is sent to React.
 
 ## The live site is at https://master.d25jr6vo3627gh.amplifyapp.com/
 
