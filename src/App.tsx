@@ -292,6 +292,10 @@ function App() {
                 <br />
                 Say 'Get all orders'
                 <br />
+                Say 'What are the top 5 highly-rated guitar products?'
+                <br />
+                Say 'Is the BOYA BYM1 Microphone good for a cello?'
+                <br />
               </h3>
             </div>
           )}
